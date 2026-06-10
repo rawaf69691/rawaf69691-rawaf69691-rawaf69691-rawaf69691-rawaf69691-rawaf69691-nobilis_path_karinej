@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: submissions
+    // Document ID: auto-generated
+    // Fields:
+    //   - type: string (required, 'credit-repair' | 'tax-strategy')
+    //   - fullName: string (required, 1-100 chars)
+    //   - email: string (required, valid email format)
+    //   - phone: string (required, 1-20 chars)
+    //   - state: string (required)
+    //   - createdAt: string (required, ISO 8601)
+    //   - isDisqualified: bool (optional)
+    //   - missingRequirements: list (optional, strings)
+    //   - [Other form-specific fields based on type]
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "proffessional22@gmail.com" || 
+         request.auth.token.email == "bookingforkarinej@gmail.com") &&
+        request.auth.token.email_verified == true;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    function isValidSubmission(data) {
+      return data.keys().hasAll(['type', 'fullName', 'email', 'phone', 'state', 'createdAt']) &&
+             data.type in ['credit-repair', 'tax-strategy'] &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() <= 100 &&
+             isValidEmail(data.email) &&
+             data.phone is string && data.phone.size() > 0 && data.phone.size() <= 20 &&
+             data.state is string &&
+             isValidDateString(data.createdAt);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /submissions/{submissionId} {
+      // Public can create submissions if they follow the schema
+      allow create: if isValidSubmission(request.resource.data);
+      
+      // Only authorized admins can read or delete
+      allow read, delete: if isAdmin();
+      
+      // No updates allowed to submissions once created to maintain integrity
+      allow update: if false;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

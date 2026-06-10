@@ -1,0 +1,54 @@
+{
+  "entities": {
+    "Submission": {
+      "title": "Client Submission",
+      "description": "A lead submission for either Tax Strategy or Credit Repair.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["credit-repair", "tax-strategy"],
+          "description": "The type of service requested."
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Client's full name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Client's email address."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Client's phone number."
+        },
+        "state": {
+          "type": "string",
+          "description": "Client's state of residence."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of submission."
+        },
+        "isDisqualified": {
+          "type": "boolean",
+          "description": "Whether the tax strategy submission was disqualified."
+        },
+        "missingRequirements": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of missing compliance items for tax strategy."
+        }
+      },
+      "required": ["type", "fullName", "email", "phone", "state", "createdAt"]
+    }
+  },
+  "firestore": {
+    "submissions/{submissionId}": {
+      "schema": "Submission",
+      "description": "Collection of all client lead submissions."
+    }
+  }
+}
